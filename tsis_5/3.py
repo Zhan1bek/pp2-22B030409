@@ -1,7 +1,7 @@
 import re
 def text_match(text):
         string = '^[a-z]+_[a-z]+$'
-        if re.search(patterns,  text):
+        if re.search(string,  text):
                 return 'Found a match!'
         else:
                 return('Not matched!')
