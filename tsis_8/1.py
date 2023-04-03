@@ -31,7 +31,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Cars")
 
 # load pictures
-background = pygame.image.load('bkg.png')
+background = pygame.image.load('images/bkg.png')
 
 # переменные для движения заднего фона
 bgY = 0
@@ -42,7 +42,7 @@ BGSPEED = 5
 class Player(pygame.sprite.Sprite):  # класс игрока
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load('Player.png')
+        self.image = pygame.image.load('images/Player.png')
         self.rect = self.image.get_rect()
         self.rect.center = (160, 520)
 
@@ -69,7 +69,7 @@ class Coins(pygame.sprite.Sprite):  # класс монеток
 
     def __init__(self):
         super().__init__()
-        self.image = pygame.image.load('dollar.png')
+        self.image = pygame.image.load('images/dollar.png')
         self.rect = self.image.get_rect()
         self.rect.center = (random.randint(24, WIDTH - 24), random.randint(24, HEIGHT - 24))
 
