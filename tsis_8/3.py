@@ -1,87 +1,120 @@
 import pygame
-from random import randint
 
 pygame.init()
-
-WIDTH, HEIGHT = 800, 600
-FPS = 60
-
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
-clock = pygame.time.Clock()
-
-finished = False
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
+WIDTH, HEIGHT = 800, 800
+SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+BLACK = pygame.Color(0, 0, 0)
+WHITE = pygame.Color(255, 255, 255)
 
 
-def drawRect(color, pos, width, height):
-    pygame.draw.rect(screen, color, (pos[0], pos[1], width, height), 4)
+class GameObject:
+    def draw(self):
+        raise NotImplementedError
+
+    def handle(self, mouse_pos):
+        raise NotImplementedError
 
 
-def drawCircle(color, pos, RAD):
-    pygame.draw.circle(screen, color, pos, RAD, 4)
+class Button:
+    def __init__(self):
+        self.rect = pygame.draw.rect(
+            SCREEN,
+            (0, 255, 0),
+            (WIDTH // 2 - 20, 20, 40, 40)
+        )
+
+    def draw(self):
+        self.rect = pygame.draw.rect(
+            SCREEN,
+            (0, 255, 0),
+            (WIDTH // 2 - 20, 20, 40, 40)
+        )
 
 
-def eraser(pos, RAD):
-    pygame.draw.circle(screen, WHITE, pos, RAD)
+class Pen(GameObject):
+    def __init__(self, *args, **kwargs):
+        self.points = []  # [(x1, y1), (x2, y2)]
+
+    def draw(self):
+        for idx, value in enumerate(self.points[:-1]):
+            pygame.draw.line(
+                SCREEN,
+                WHITE,
+                start_pos=value,  # self.points[idx]
+                end_pos=self.points[idx + 1],
+            )
+
+    def handle(self, mouse_pos):
+        self.points.append(mouse_pos)
 
 
-RAD = 30
+class Rectangle(GameObject):
+    def __init__(self, start_pos):
+        self.start_pos = start_pos  # (x1, y1)
+        self.end_pos = start_pos  # (x2, y2)
 
-drawing = False
-color = BLACK
+    def draw(self):
+        start_pos_x = min(self.start_pos[0], self.end_pos[0])
+        start_pos_y = min(self.start_pos[1], self.end_pos[1])
 
-screen.fill(pygame.Color('white'))
+        end_pos_x = max(self.start_pos[0], self.end_pos[0])
+        end_pos_y = max(self.start_pos[1], self.end_pos[1])
 
-start_pos = 0
-end_pos = 0
+        pygame.draw.rect(
+            SCREEN,
+            WHITE,
+            (
+                start_pos_x,
+                start_pos_y,
+                end_pos_x - start_pos_x,
+                end_pos_y - start_pos_y,
+            ),
+            width=5,
+        )
 
-mode = 0
+    def handle(self, mouse_pos):
+        self.end_pos = mouse_pos
 
-all_colors = []
 
-for _ in range(20):
-    all_colors.append((randint(0, 255), randint(0, 255), randint(0, 255)))
+def main():
+    running = True
+    clock = pygame.time.Clock()
+    active_obj = None
+    button = Button()
 
-while not finished:
-    clock.tick(FPS)
+    objects = [
+        button,
+    ]
+    # current_shape = 'pen'
+    current_shape = Pen
 
-    pos = pygame.mouse.get_pos()
+    while running:
+        SCREEN.fill(BLACK)
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            finished = True
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            drawing = True
-            start_pos = pos
-            if pos[0] > 20 and pos[0] < 720 and pos[1] > 20 and pos[1] < 40:
-                color = screen.get_at(pos)
-        if event.type == pygame.MOUSEBUTTONUP:
-            drawing = False
-            end_pos = pos
-            rect_x = abs(start_pos[0] - end_pos[0])
-            rect_y = abs(start_pos[1] - end_pos[1])
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-            if mode == 0:
-                drawRect(color, start_pos, rect_x, rect_y)
-            elif mode == 1:
-                drawCircle(color, start_pos, rect_x)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if button.rect.collidepoint(event.pos):
+                    current_shape = Rectangle
+                else:
+                    active_obj = current_shape(start_pos=event.pos)
 
-        if event.type == pygame.MOUSEMOTION and drawing:
-            if mode == 2:
-                eraser(pos, RAD)
+            if event.type == pygame.MOUSEMOTION and active_obj is not None:
+                active_obj.handle(pygame.mouse.get_pos())
+                active_obj.draw()
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                mode += 1
-                mode %= 3
-            if event.key == pygame.K_BACKSPACE:
-                screen.fill(WHITE)
+            if event.type == pygame.MOUSEBUTTONUP and active_obj is not None:
+                objects.append(active_obj)
+                active_obj = None
 
-    each = 35
-    for i, col in enumerate(all_colors):
-        pygame.draw.rect(screen, col, (20 + i * each, 20, each, 20))
-    pygame.display.flip()
-pygame.quit()
+        for obj in objects:
+            obj.draw()
+
+        clock.tick(30)
+        pygame.display.flip()
+
+
+if __name__ == '__main__':
+    main()
