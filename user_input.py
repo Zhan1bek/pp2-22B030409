@@ -1,2 +1,2 @@
-username = input("Enter username:")
-print("Username is: " + username)
+def usename(name):
+    print("hello" + name)
